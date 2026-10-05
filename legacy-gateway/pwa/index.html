@@ -175,7 +175,8 @@
       <div id="messages"></div>
       <div id="status"></div>
       <div id="input-area">
-        <input type="text" id="message-input" placeholder="Type a message..." maxlength="160">
+        <input type="text" id="recipient-input" placeholder="To: (user id)" maxlength="30" style="flex: 0.4;">
+        <input type="text" id="message-input" placeholder="Type a message..." maxlength="160" style="flex: 0.6;">
         <button id="btn-send">Send</button>
       </div>
     </div>
@@ -194,7 +195,14 @@
     const deviceSecretInput = document.getElementById('device-secret');
     const messagesDiv = document.getElementById('messages');
     const messageInput = document.getElementById('message-input');
+    const recipientInput = document.getElementById('recipient-input');
     const statusDiv = document.getElementById('status');
+    
+    // Restore last recipient
+    recipientInput.value = localStorage.getItem('last_recipient') || '';
+    recipientInput.addEventListener('change', () => {
+      localStorage.setItem('last_recipient', recipientInput.value.trim());
+    });
     
     // Check if already logged in
     if (deviceId && deviceSecret) {
@@ -284,6 +292,7 @@
     
     async function sendMessage() {
       const body = messageInput.value.trim();
+      const to = (document.getElementById('recipient-input').value.trim() || 'agent-zero');
       if (!body) return;
       
       messageInput.value = '';
@@ -297,11 +306,11 @@
             'X-Device-Secret': deviceSecret,
             'Content-Type': 'application/x-www-form-urlencoded'
           },
-          body: `to=agent-zero&msg=${encodeURIComponent(body)}&idem=${Date.now()}`
+          body: `to=${encodeURIComponent(to)}&msg=${encodeURIComponent(body)}&idem=${Date.now()}`
         });
         if (!res.ok) throw new Error('Send failed');
         
-        showStatus('Sent!', 'success');
+        showStatus('Sent to ' + to + '!', 'success');
         // Sync after send
         setTimeout(syncMessages, 500);
       } catch (e) {
