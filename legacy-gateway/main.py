@@ -68,6 +68,50 @@ async def ota_file(filename: str):
 
 
 # =============================================================================
+# PWA - Modern phone web app
+# =============================================================================
+
+@app.get("/app/", tags=["pwa"])
+async def pwa_index():
+    """Serve the PWA chat app."""
+    path = os.path.join("pwa", "index.html")
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="PWA not found")
+    return FileResponse(path, media_type="text/html")
+
+
+@app.get("/pwa/manifest.json", tags=["pwa"])
+async def pwa_manifest():
+    """Serve PWA manifest."""
+    path = os.path.join("pwa", "manifest.json")
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Manifest not found")
+    return FileResponse(path, media_type="application/json")
+
+
+@app.get("/pwa/sw.js", tags=["pwa"])
+async def pwa_service_worker():
+    """Serve PWA service worker (must be same-origin scope)."""
+    path = os.path.join("pwa", "sw.js")
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Service worker not found")
+    return FileResponse(
+        path,
+        media_type="application/javascript",
+        headers={"Service-Worker-Allowed": "/"},
+    )
+
+
+@app.get("/pwa/icon-{size}.png", tags=["pwa"])
+async def pwa_icon(size: int):
+    """Serve PWA icon."""
+    path = os.path.join("pwa", f"icon-{size}.png")
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Icon not found")
+    return FileResponse(path, media_type="image/png")
+
+
+# =============================================================================
 # Root endpoint - friendly HTML for browser visitors
 # =============================================================================
 

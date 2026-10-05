@@ -19,6 +19,9 @@ COPY main.py .
 # Copy BlackBerry OTA install files
 COPY ota ./ota
 
+# Copy PWA (modern phone web app)
+COPY pwa ./pwa
+
 # Run as non-root user
 RUN useradd --create-home --uid 1000 jph && chown -R jph:jph /app
 USER jph

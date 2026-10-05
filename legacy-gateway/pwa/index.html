@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>JPH Messenger</title>
+  <link rel="manifest" href="/pwa/manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #app { height: 100%; display: flex; flex-direction: column; }
+    
+    /* Login Screen */
+    #login-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    #login-screen h1 { font-size: 28px; margin-bottom: 30px; color: #4ade80; }
+    #login-screen input {
+      width: 100%;
+      max-width: 300px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      border: 1px solid #333;
+      border-radius: 12px;
+      background: #252542;
+      color: #fff;
+      font-size: 16px;
+    }
+    #login-screen button {
+      width: 100%;
+      max-width: 300px;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: #4ade80;
+      color: #1a1a2e;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #login-screen button:active { transform: scale(0.98); }
+    #login-screen .secondary {
+      background: transparent;
+      color: #888;
+      margin-top: 20px;
+    }
+    
+    /* Chat Screen */
+    #chat-screen { display: none; height: 100%; flex-direction: column; }
+    header {
+      padding: 16px 20px;
+      background: #252542;
+      border-bottom: 1px solid #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h2 { font-size: 18px; color: #4ade80; }
+    header button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      background: #333;
+      color: #888;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    
+    /* Messages */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .message {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 15px;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+    .message.sent {
+      align-self: flex-end;
+      background: #4ade80;
+      color: #1a1a2e;
+      border-bottom-right-radius: 4px;
+    }
+    .message.received {
+      align-self: flex-start;
+      background: #333;
+      color: #eee;
+      border-bottom-left-radius: 4px;
+    }
+    .message .meta {
+      font-size: 11px;
+      opacity: 0.6;
+      margin-top: 4px;
+    }
+    
+    /* Input Area */
+    #input-area {
+      padding: 16px;
+      background: #252542;
+      border-top: 1px solid #333;
+      display: flex;
+      gap: 10px;
+    }
+    #input-area input {
+      flex: 1;
+      padding: 14px 16px;
+      border: 1px solid #333;
+      border-radius: 24px;
+      background: #1a1a2e;
+      color: #fff;
+      font-size: 16px;
+    }
+    #input-area input:focus { outline: none; border-color: #4ade80; }
+    #input-area button {
+      padding: 14px 24px;
+      border: none;
+      border-radius: 24px;
+      background: #4ade80;
+      color: #1a1a2e;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #input-area button:active { transform: scale(0.95); }
+    
+    /* Status */
+    #status {
+      padding: 8px 16px;
+      background: #252542;
+      text-align: center;
+      font-size: 13px;
+      color: #888;
+    }
+    #status.error { color: #f87171; }
+    #status.success { color: #4ade80; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Login Screen -->
+    <div id="login-screen">
+      <h1>📱 JPH Messenger</h1>
+      <input type="text" id="device-id" placeholder="Device ID (e.g., myphone)">
+      <input type="password" id="device-secret" placeholder="Device Secret (if already registered)">
+      <button id="btn-login">Login</button>
+      <button id="btn-register" class="secondary">Register New Device</button>
+    </div>
+    
+    <!-- Chat Screen -->
+    <div id="chat-screen">
+      <header>
+        <h2>💬 JPH Messenger</h2>
+        <button id="btn-logout">Logout</button>
+      </header>
+      <div id="messages"></div>
+      <div id="status"></div>
+      <div id="input-area">
+        <input type="text" id="message-input" placeholder="Type a message..." maxlength="160">
+        <button id="btn-send">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = ''; // Same origin
+    let deviceId = localStorage.getItem('device_id') || '';
+    let deviceSecret = localStorage.getItem('device_secret') || '';
+    let cursor = parseInt(localStorage.getItem('sync_cursor') || '0');
+    
+    // DOM elements
+    const loginScreen = document.getElementById('login-screen');
+    const chatScreen = document.getElementById('chat-screen');
+    const deviceIdInput = document.getElementById('device-id');
+    const deviceSecretInput = document.getElementById('device-secret');
+    const messagesDiv = document.getElementById('messages');
+    const messageInput = document.getElementById('message-input');
+    const statusDiv = document.getElementById('status');
+    
+    // Check if already logged in
+    if (deviceId && deviceSecret) {
+      showChat();
+    }
+    
+    // Event listeners
+    document.getElementById('btn-login').onclick = login;
+    document.getElementById('btn-register').onclick = register;
+    document.getElementById('btn-send').onclick = sendMessage;
+    document.getElementById('btn-logout').onclick = logout;
+    messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+    
+    async function login() {
+      const id = deviceIdInput.value.trim();
+      const secret = deviceSecretInput.value.trim();
+      if (!id || !secret) return showStatus('Please enter device ID and secret', 'error');
+      
+      deviceId = id;
+      deviceSecret = secret;
+      localStorage.setItem('device_id', id);
+      localStorage.setItem('device_secret', secret);
+      
+      // Verify by pinging
+      try {
+        const res = await fetch(`${API}/legacy/v1/ping`, {
+          headers: { 'X-Device-ID': id, 'X-Device-Secret': secret }
+        });
+        if (!res.ok) throw new Error('Invalid credentials');
+        showChat();
+        showStatus('Logged in!', 'success');
+      } catch (e) {
+        showStatus('Invalid credentials', 'error');
+        localStorage.removeItem('device_id');
+        localStorage.removeItem('device_secret');
+        deviceId = '';
+        deviceSecret = '';
+      }
+    }
+    
+    async function register() {
+      const id = deviceIdInput.value.trim();
+      if (!id) return showStatus('Please enter a device ID', 'error');
+      
+      showStatus('Registering...', '');
+      try {
+        const res = await fetch(`${API}/legacy/v1/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ device_id: id })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail?.error || 'Registration failed');
+        
+        deviceId = id;
+        deviceSecret = data.device_secret;
+        localStorage.setItem('device_id', id);
+        localStorage.setItem('device_secret', data.device_secret);
+        showChat();
+        showStatus('Registered! Device secret saved.', 'success');
+      } catch (e) {
+        showStatus(e.message, 'error');
+      }
+    }
+    
+    function showChat() {
+      loginScreen.style.display = 'none';
+      chatScreen.style.display = 'flex';
+      messageInput.focus();
+      syncMessages();
+      // Auto-sync every 5 seconds
+      setInterval(syncMessages, 5000);
+    }
+    
+    function logout() {
+      deviceId = '';
+      deviceSecret = '';
+      cursor = 0;
+      localStorage.removeItem('device_id');
+      localStorage.removeItem('device_secret');
+      localStorage.removeItem('sync_cursor');
+      chatScreen.style.display = 'none';
+      loginScreen.style.display = 'flex';
+      deviceIdInput.value = '';
+      deviceSecretInput.value = '';
+    }
+    
+    async function sendMessage() {
+      const body = messageInput.value.trim();
+      if (!body) return;
+      
+      messageInput.value = '';
+      showStatus('Sending...', '');
+      
+      try {
+        const res = await fetch(`${API}/legacy/v1/msg`, {
+          method: 'POST',
+          headers: { 
+            'X-Device-ID': deviceId,
+            'X-Device-Secret': deviceSecret,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: `to=agent-zero&msg=${encodeURIComponent(body)}&idem=${Date.now()}`
+        });
+        if (!res.ok) throw new Error('Send failed');
+        
+        showStatus('Sent!', 'success');
+        // Sync after send
+        setTimeout(syncMessages, 500);
+      } catch (e) {
+        showStatus(e.message, 'error');
+      }
+    }
+    
+    async function syncMessages() {
+      try {
+        const url = `${API}/legacy/v1/messages?cursor=${cursor}`;
+        const res = await fetch(url, {
+          headers: { 'X-Device-ID': deviceId, 'X-Device-Secret': deviceSecret }
+        });
+        if (!res.ok) return;
+        
+        const data = await res.json();
+        const newMsgs = data.messages || [];
+        
+        if (newMsgs.length > 0) {
+          newMsgs.forEach(msg => {
+            if (msg.message_id > cursor) {
+              addMessage(msg);
+              cursor = msg.message_id;
+            }
+          });
+          localStorage.setItem('sync_cursor', cursor.toString());
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        if (data.has_more) {
+          setTimeout(syncMessages, 1000);
+        }
+      } catch (e) {
+        // Silent fail on sync
+      }
+    }
+    
+    function addMessage(msg) {
+      const div = document.createElement('div');
+      div.className = `message ${msg.sender === deviceId ? 'sent' : 'received'}`;
+      div.innerHTML = `
+        ${escapeHtml(msg.body)}
+        <div class="meta">${msg.sender === deviceId ? 'You' : msg.sender} • ${formatTime(msg.timestamp)}</div>
+      `;
+      messagesDiv.appendChild(div);
+    }
+    
+    function showStatus(text, type) {
+      statusDiv.textContent = text;
+      statusDiv.className = type;
+      if (text) setTimeout(() => statusDiv.textContent = '', 3000);
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    function formatTime(iso) {
+      const d = new Date(iso);
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    // Register service worker for PWA installability
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/pwa/sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>
