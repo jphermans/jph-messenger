@@ -14,6 +14,7 @@ public class Credentials {
     private static final byte KEY_SECRET = 'c';
     private static final byte KEY_CURSOR = 'n'; // sync cursor
     private static final byte KEY_DEFAULT_RECIPIENT = 'r'; // default recipient
+    private static final byte KEY_CONNECTION = 't'; // connection type: wifi | cell
 
     /**
      * Get the device ID. Uses the hardware PIN (8 hex chars).
@@ -85,6 +86,16 @@ public class Credentials {
 
     public static void saveDefaultRecipient(String recipient) {
         saveValue(KEY_DEFAULT_RECIPIENT, recipient);
+    }
+
+    public static String loadConnectionType() {
+        String s = loadValueSafe(KEY_CONNECTION);
+        if (s.length() > 0) return s;
+        return "wifi"; // Default to Wi-Fi
+    }
+
+    public static void saveConnectionType(String type) {
+        saveValue(KEY_CONNECTION, type);
     }
 
     public static void reset() {

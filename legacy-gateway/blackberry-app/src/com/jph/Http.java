@@ -77,19 +77,27 @@ public class Http {
     }
 
     private static HttpConnection openConnection(String url) throws Exception {
-        // BB OS 7 Wi-Fi connection: use ;interface=wifi ONLY
-        // Do NOT add ;deviceside=true with Wi-Fi - that's contradictory
-        // and causes "APN is not specified" error
-        String wifiUrl = url;
-        if (url.indexOf(";interface") == -1) {
-            wifiUrl = url + ";interface=wifi";
+        // BB OS 7 transport selection based on saved connection type:
+        // - wifi: ;interface=wifi  (direct Wi-Fi, no APN needed)
+        // - cell: ;deviceside=true (direct TCP over carrier 2G/3G, APN from device settings)
+        String type = Credentials.loadConnectionType();
+        String suffix = "wifi".equals(type) ? ";interface=wifi" : ";deviceside=true";
+        
+        String fullUrl = url;
+        if (url.indexOf(";interface") == -1 && url.indexOf(";deviceside") == -1) {
+            fullUrl = url + suffix;
         }
         
         try {
-            return (HttpConnection) Connector.open(wifiUrl);
+            return (HttpConnection) Connector.open(fullUrl);
         } catch (Exception e) {
-            // Fallback: try without interface suffix (let BB choose transport)
-            return (HttpConnection) Connector.open(url);
+            // Fallback: try alternate transport, then plain URL
+            try {
+                String altSuffix = "wifi".equals(type) ? ";deviceside=true" : ";interface=wifi";
+                return (HttpConnection) Connector.open(url + altSuffix);
+            } catch (Exception e2) {
+                return (HttpConnection) Connector.open(url);
+            }
         }
     }
 

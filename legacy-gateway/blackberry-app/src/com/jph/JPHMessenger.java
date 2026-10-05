@@ -2,7 +2,16 @@ package com.jph;
 
 import net.rim.device.api.system.DeviceInfo;
 import net.rim.device.api.system.EventInjector;
+import net.rim.device.api.ui.Field;
+import net.rim.device.api.ui.FieldChangeListener;
 import net.rim.device.api.ui.MenuItem;
+import net.rim.device.api.ui.container.PopupScreen;
+import net.rim.device.api.ui.container.VerticalFieldManager;
+import net.rim.device.api.ui.container.HorizontalFieldManager;
+import net.rim.device.api.ui.component.ButtonField;
+import net.rim.device.api.ui.component.RadioButtonField;
+import net.rim.device.api.ui.component.RadioButtonGroup;
+import net.rim.device.api.ui.component.LabelField;
 import net.rim.device.api.ui.UiApplication;
 import net.rim.device.api.ui.component.Dialog;
 import net.rim.device.api.ui.component.EditField;
@@ -20,7 +29,7 @@ public class JPHMessenger extends UiApplication {
     }
 
     // App version - bump for each release
-    private static final String APP_VERSION = "0.3.2";
+    private static final String APP_VERSION = "0.4.0";
 
     public JPHMessenger() {
         pushScreen(new MainAppScreen());
@@ -228,8 +237,57 @@ public class JPHMessenger extends UiApplication {
         }
 
         private void showSettingsDialog() {
-            // Show current settings - editing requires more complex dialog
-            Dialog.alert("Server: " + Credentials.loadServer() + "\nDefault To: " + Credentials.loadDefaultRecipient() + "\nVersion: " + APP_VERSION);
+            final PopupScreen settingsScreen = new PopupScreen(
+                new VerticalFieldManager(VerticalFieldManager.VERTICAL_SCROLL | VerticalFieldManager.NO_HORIZONTAL_SCROLL));
+            
+            // Server URL field
+            final EditField serverField = new EditField("Server: ", Credentials.loadServer(), 200, EditField.EDITABLE);
+            settingsScreen.add(serverField);
+            
+            // Default recipient field
+            final EditField recipientField = new EditField("Default To: ", Credentials.loadDefaultRecipient(), 100, EditField.EDITABLE);
+            settingsScreen.add(recipientField);
+            
+            // Connection type
+            settingsScreen.add(new LabelField("Connection:"));
+            final RadioButtonGroup connGroup = new RadioButtonGroup();
+            final RadioButtonField wifiField = new RadioButtonField("Wi-Fi (recommended)", connGroup, "wifi".equals(Credentials.loadConnectionType()));
+            final RadioButtonField cellField = new RadioButtonField("Cellular (2G/3G)", connGroup, "cell".equals(Credentials.loadConnectionType()));
+            settingsScreen.add(wifiField);
+            settingsScreen.add(cellField);
+            
+            // Version display
+            LabelField versionLabel = new LabelField("Version: " + APP_VERSION, Field.FIELD_HCENTER);
+            settingsScreen.add(versionLabel);
+            
+            // Buttons
+            HorizontalFieldManager btnMgr = new HorizontalFieldManager(Field.FIELD_HCENTER);
+            ButtonField saveBtn = new ButtonField("Save");
+            ButtonField cancelBtn = new ButtonField("Cancel");
+            btnMgr.add(saveBtn);
+            btnMgr.add(cancelBtn);
+            settingsScreen.add(btnMgr);
+            
+            // Save button listener
+            saveBtn.setChangeListener(new FieldChangeListener() {
+                public void fieldChanged(Field field, int context) {
+                    Credentials.saveServer(serverField.getText().trim());
+                    Credentials.saveDefaultRecipient(recipientField.getText().trim());
+                    String connType = wifiField.isSelected() ? "wifi" : "cell";
+                    Credentials.saveConnectionType(connType);
+                    UiApplication.getUiApplication().popScreen(settingsScreen);
+                    Dialog.alert("Settings saved!\nConnection: " + connType.toUpperCase());
+                }
+            });
+            
+            // Cancel button listener
+            cancelBtn.setChangeListener(new FieldChangeListener() {
+                public void fieldChanged(Field field, int context) {
+                    UiApplication.getUiApplication().popScreen(settingsScreen);
+                }
+            });
+            
+            UiApplication.getUiApplication().pushScreen(settingsScreen);
         }
 
         private void performPing() throws Exception {
