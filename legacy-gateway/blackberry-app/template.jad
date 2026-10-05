@@ -1,0 +1,17 @@
+MIDlet-Name: JPH Messenger
+MIDlet-Version: 0.2.5
+MIDlet-Vendor: JPH
+MIDlet-Jar-URL: JPHMessenger.jar
+MIDlet-Jar-Size: 9167
+MicroEdition-Profile: MIDP-2.0
+MicroEdition-Configuration: CLDC-1.1
+MIDlet-1: JPH Messenger, icon.png, com.jph.JPHMessenger
+Manifest-Version: 1.0
+RIM-COD-URL: JPHMessenger.cod
+RIM-COD-Size: 13852
+RIM-COD-Creation-Time: 1791173405
+RIM-COD-Module-Name: JPHMessenger
+RIM-COD-Module-Dependencies: net_rim_cldc
+RIM-COD-SHA1: 11 25 37 0a ff 3d 76 a3 4a 14 95 10 a7 cf e5 0e d8 e6 80 5a
+RIM-MIDlet-Permissions: javax.microedition.io.Connector
+MIDlet-Permissions: javax.microedition.io.Connector.open

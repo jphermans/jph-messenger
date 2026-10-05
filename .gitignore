@@ -1,0 +1,27 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+
+# BlackBerry build artifacts
+blackberry-app/build/
+blackberry-app/preverify_out/
+blackberry-app/dist/
+*.cso
+*.csl
+*.debug
+*.cod
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
