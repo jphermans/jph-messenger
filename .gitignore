@@ -30,3 +30,4 @@ Thumbs.db
 !legacy-gateway/ota/*.cod
 !legacy-gateway/ota/*.jar
 !legacy-gateway/ota/*.jad
+legacy-gateway/data/
