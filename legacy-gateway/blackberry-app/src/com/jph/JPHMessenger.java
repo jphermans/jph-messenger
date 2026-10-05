@@ -1,7 +1,6 @@
 package com.jph;
 
 import net.rim.device.api.system.DeviceInfo;
-import net.rim.device.api.system.EventInjector;
 import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.FieldChangeListener;
 import net.rim.device.api.ui.MenuItem;
@@ -434,27 +433,14 @@ public class JPHMessenger extends UiApplication {
          */
         private void offerReboot() {
             if (Dialog.ask(Dialog.D_YES_NO, "Reboot device now to complete removal?") == Dialog.YES) {
-                forceReboot();
+                Dialog.alert("Please reboot manually:\nAlt + Right Shift + Del");
             }
         }
 
-        private void forceReboot() {
-            try {
-                // Alt down
-                EventInjector.invokeEvent(new EventInjector.KeyCodeEvent(
-                        EventInjector.KeyEvent.KEY_DOWN, (char) 257, 100));
-                // Right Shift down
-                EventInjector.invokeEvent(new EventInjector.KeyCodeEvent(
-                        EventInjector.KeyEvent.KEY_DOWN, (char) 256, 150));
-                // Del down + up (triggers soft reset)
-                EventInjector.invokeEvent(new EventInjector.KeyCodeEvent(
-                        EventInjector.KeyEvent.KEY_DOWN, (char) 127, 200));
-                EventInjector.invokeEvent(new EventInjector.KeyCodeEvent(
-                        EventInjector.KeyEvent.KEY_UP, (char) 127, 250));
-            } catch (Throwable t) {
-                // Fallback: manual instructions if injection is blocked
-                Dialog.alert("Reboot manually:\nAlt + Right Shift + Del");
-            }
+        // Note: Programmatic reboot requires signed API (EventInjector).
+        // For unsigned apps, manual reboot is required.
+        private void showRebootHint() {
+            Dialog.alert("Reboot manually:\nAlt + Right Shift + Del");
         }
     }
 }
