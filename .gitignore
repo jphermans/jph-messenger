@@ -25,3 +25,8 @@ blackberry-app/dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# Keep prebuilt OTA artifacts for easy install
+!legacy-gateway/ota/*.cod
+!legacy-gateway/ota/*.jar
+!legacy-gateway/ota/*.jad
