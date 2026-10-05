@@ -28,7 +28,7 @@ public class JPHMessenger extends UiApplication {
     }
 
     // App version - bump for each release
-    private static final String APP_VERSION = "0.4.0";
+    private static final String APP_VERSION = "0.4.1";
 
     public JPHMessenger() {
         pushScreen(new MainAppScreen());
