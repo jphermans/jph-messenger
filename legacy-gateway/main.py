@@ -8,6 +8,7 @@ Minimal gateway implementing:
 """
 
 import os
+import json
 import secrets
 import hashlib
 import httpx
@@ -36,7 +37,35 @@ messages_db: list[dict] = []  # Message queue
 next_message_id = 1
 
 # Agent Zero session context (device_id -> conversation context)
+# Persisted to disk so the same device keeps the SAME chat across gateway restarts.
+A0_SESSIONS_FILE = os.getenv("A0_SESSIONS_FILE", "data/a0_sessions.json")
 a0_sessions: dict[str, dict] = {}
+
+
+def _load_a0_sessions() -> None:
+    global a0_sessions
+    try:
+        if os.path.exists(A0_SESSIONS_FILE):
+            with open(A0_SESSIONS_FILE, "r", encoding="utf-8") as f:
+                a0_sessions = json.load(f)
+            LOG.info("a0.sessions.loaded", count=len(a0_sessions))
+    except Exception as exc:
+        LOG.error("a0.sessions.load_failed", error=str(exc))
+        a0_sessions = {}
+
+
+def _save_a0_sessions() -> None:
+    try:
+        os.makedirs(os.path.dirname(A0_SESSIONS_FILE) or ".", exist_ok=True)
+        tmp = A0_SESSIONS_FILE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(a0_sessions, f)
+        os.replace(tmp, A0_SESSIONS_FILE)
+    except Exception as exc:
+        LOG.error("a0.sessions.save_failed", error=str(exc))
+
+
+_load_a0_sessions()
 
 app = FastAPI(title="JPH Legacy Gateway")
 
@@ -270,17 +299,19 @@ async def dispatch_to_agent_zero(message: dict) -> None:
     
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
+            # A0 /api/message contract (verified in A0 source api/message.py):
+            # request: {text, context?}  response: {message, context}
             payload = {
-                "message": message["body"],
+                "text": message["body"],
             }
-            # Include context_id if we have an existing conversation
+            # Include the existing conversation context so the SAME chat continues
             if context_id:
-                payload["context_id"] = context_id
+                payload["context"] = context_id
             
             headers = {"Content-Type": "application/json"}
             if A0_API_KEY:
                 headers["X-API-Key"] = A0_API_KEY
-            
+
             resp = await client.post(
                 f"{A0_API_URL}/api/message",
                 json=payload,
@@ -295,13 +326,14 @@ async def dispatch_to_agent_zero(message: dict) -> None:
                 LOG.error("a0.api_error", error=data.get("error"))
                 response_text = f"[Agent Zero error: {data.get('error')}]"
             else:
-                # Persist context for multi-turn conversations
-                new_context = data.get("context_id")
+                # Persist context for multi-turn conversations (SAME chat each time)
+                new_context = data.get("context")
                 if new_context:
                     a0_sessions[device_id] = {"context_id": new_context}
-                
+                    _save_a0_sessions()
+
                 # Extract reply text
-                response_text = data.get("response") or ""
+                response_text = data.get("message") or ""
                 if not response_text:
                     response_text = "[A0 returned empty response]"
             
@@ -410,6 +442,7 @@ async def unregister_device(device: dict = Depends(verify_device)):
     device_id = device["device_id"]
     devices_db.pop(device_id, None)
     a0_sessions.pop(device_id, None)
+    _save_a0_sessions()
 
     # Remove messages to/from this device
     global messages_db
