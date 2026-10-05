@@ -2,6 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-BlackBerry%20OS%207.1-black)](https://en.wikipedia.org/wiki/BlackBerry_OS)
+[![PWA](https://img.shields.io/badge/modern%20clients-PWA-5A0FC8)](legacy-gateway/pwa/)
 [![Device](https://img.shields.io/badge/device-Bold%209790%20RE071UW-blue)](https://www.gsmarena.com/blackberry_bold_9790-4332.php)
 [![Gateway](https://img.shields.io/badge/gateway-FastAPI%20%2B%20Docker-009688)](https://fastapi.tiangolo.com/)
 [![Agent](https://img.shields.io/badge/AI-Agent%20Zero-8A2BE2)](https://github.com/The-Pocket/Agent-Zero)
