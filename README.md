@@ -59,8 +59,25 @@ cd jph-messenger/legacy-gateway
 
 # Copy environment template
 cp .env.example .env
-# Edit .env with your settings
 ```
+
+Then **edit `.env`** with your settings. This is the example content you can copy and save as `.env`:
+
+```env
+# JPH Messenger - Environment Configuration
+# Copy this content into a file named .env and adjust the values.
+
+# Agent Zero URL:
+# - Same server (Docker):  http://host.docker.internal:80
+# - Remote server:         http://192.168.1.50:80
+A0_API_URL=http://host.docker.internal:80
+
+# Agent Zero API Key (from A0 WebUI: Settings → API)
+# Leave empty to disable agent routing
+A0_API_KEY=
+```
+
+> **Note:** The `.env` file is ignored by Git — your API key stays local.
 
 ### Step 2: Start the Gateway
 
