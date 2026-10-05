@@ -91,9 +91,26 @@ curl http://localhost:8080/health
 
 ### Step 3: Install on BlackBerry
 
-1. Open BlackBerry Browser
+#### Option A: OTA (Over-The-Air) - Recommended
+
+Start the gateway first:
+```bash
+docker compose up -d --build
+```
+
+Then on your BlackBerry:
+1. Open Browser
 2. Navigate to: `http://YOUR_SERVER_IP:8080/ota/JPHMessenger.jad`
 3. Download and install
+
+#### Option B: Download Files Directly
+
+Download from GitHub Release:
+- [JPHMessenger.jad](https://github.com/§§secret(AUTH_LOGIN)/jph-messenger/releases/download/v0.4.0/JPHMessenger.jad) - OTA descriptor
+- [JPHMessenger.cod](https://github.com/§§secret(AUTH_LOGIN)/jph-messenger/releases/download/v0.4.0/JPHMessenger.cod) - App binary
+- [JPHMessenger.jar](https://github.com/§§secret(AUTH_LOGIN)/jph-messenger/releases/download/v0.4.0/JPHMessenger.jar) - Java archive
+
+Host the files on any web server and open the `.jad` URL on your BlackBerry.
 
 ### Step 4: Configure the App
 
